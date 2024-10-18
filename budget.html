@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enhanced Expense Tracker</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            padding: 10px;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: white;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        h1 {
+            margin-bottom: 20px;
+            font-size: 24px;
+        }
+
+        .budget-input, .income-input {
+            margin-bottom: 20px;
+        }
+
+        input[type="number"], input[type="text"], select {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        button {
+            padding: 10px 20px;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        button:hover {
+            background-color: #218838;
+        }
+
+        .expenses-list {
+            list-style: none;
+            margin: 20px 0;
+        }
+
+        .expenses-list li {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px;
+            background-color: #f9f9f9;
+            margin-bottom: 5px;
+            border-left: 5px solid #28a745;
+            position: relative;
+        }
+
+        .expenses-list li.over-budget {
+            border-left-color: #dc3545;
+        }
+
+        .delete-btn {
+            background-color: #dc3545;
+            border: none;
+            color: white;
+            padding: 5px;
+            border-radius: 4px;
+            cursor: pointer;
+            position: absolute;
+            right: 10px;
+        }
+
+        .budget-status {
+            margin-top: 20px;
+        }
+
+        .budget-status span {
+            font-weight: bold;
+        }
+
+        .chart-container {
+            margin: 20px 0;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 15px;
+            }
+
+            h1 {
+                font-size: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Enhanced Expense Tracker</h1>
+
+        <!-- Income Section -->
+        <div class="income-input">
+            <input type="number" id="income" placeholder="Enter your income" min="0">
+        </div>
+
+        <!-- Budget Section -->
+        <div class="budget-input">
+            <input type="number" id="budget" placeholder="Enter your budget" min="0">
+        </div>
+
+        <!-- Expense Entry Section -->
+        <div>
+            <input type="text" id="expense-desc" placeholder="Expense description">
+            <input type="number" id="expense-amount" placeholder="Amount" min="0">
+            <select id="expense-category">
+                <option value="Food">Food</option>
+                <option value="Transport">Transport</option>
+                <option value="Shopping">Shopping</option>
+                <option value="Bills">Bills</option>
+                <option value="Other">Other</option>
+            </select>
+            <button id="add-expense">Add Expense</button>
+        </div>
+
+        <!-- Expense Filter Section -->
+        <div>
+            <select id="filter-category">
+                <option value="All">All Categories</option>
+                <option value="Food">Food</option>
+                <option value="Transport">Transport</option>
+                <option value="Shopping">Shopping</option>
+                <option value="Bills">Bills</option>
+                <option value="Other">Other</option>
+            </select>
+        </div>
+
+        <ul id="expenses-list" class="expenses-list"></ul>
+
+        <div class="budget-status">
+            <p>Total Expenses: $<span id="total-expenses">0</span></p>
+            <p>Budget: $<span id="budget-display">0</span></p>
+            <p>Income: $<span id="income-display">0</span></p>
+            <p id="budget-message"></p>
+        </div>
+
+        <!-- Chart Container -->
+        <div class="chart-container">
+            <canvas id="expenseChart"></canvas>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const budgetInput = document.getElementById('budget');
+            const incomeInput = document.getElementById('income');
+            const expenseDesc = document.getElementById('expense-desc');
+            const expenseAmount = document.getElementById('expense-amount');
+            const expenseCategory = document.getElementById('expense-category');
+            const addExpenseButton = document.getElementById('add-expense');
+            const expensesList = document.getElementById('expenses-list');
+            const totalExpensesDisplay = document.getElementById('total-expenses');
+            const budgetDisplay = document.getElementById('budget-display');
+            const incomeDisplay = document.getElementById('income-display');
+            const budgetMessage = document.getElementById('budget-message');
+            const filterCategory = document.getElementById('filter-category');
+            const expenseChart = document.getElementById('expenseChart').getContext('2d');
+
+            let totalExpenses = 0;
+            let budget = 0;
+            let income = 0;
+            let expenses = [];
+
+            // Pie chart setup
+            const chart = new Chart(expenseChart, {
+                type: 'pie',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        data: [],
+                        backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#F7464A']
+                    }]
+                }
+            });
+
+            // Load saved data from localStorage
+            budget = parseFloat(localStorage.getItem('budget')) || 0;
+            income = parseFloat(localStorage.getItem('income')) || 0;
+            totalExpenses = parseFloat(localStorage.getItem('totalExpenses')) || 0;
+            expenses = JSON.parse(localStorage.getItem('expenses')) || [];
+            updateUI();
+
+            // Add expense button event listener
+            addExpenseButton.addEventListener('click', () => {
+                const desc = expenseDesc.value.trim();
+                const amount = parseFloat(expenseAmount.value.trim());
+                const category = expenseCategory.value;
+
+                if (!desc || isNaN(amount) || amount <= 0) {
+                    alert('Please enter a valid description and amount.');
+                    return;
+                }
+
+                const expense = { desc, amount, category };
+                expenses.push(expense);
+                totalExpenses += amount;
+                updateLocalStorage();
+                updateUI();
+
+                expenseDesc.value = '';
+                expenseAmount.value = '';
+            });
+
+            // Budget and income input listeners
+            budgetInput.addEventListener('input', () => {
+                budget = parseFloat(budgetInput.value.trim());
+                if (isNaN(budget) || budget <= 0) budget = 0;
+                updateLocalStorage();
+                updateUI();
+            });
+
+            incomeInput.addEventListener('input', () => {
+                income = parseFloat(incomeInput.value.trim());
+                if (isNaN(income) || income <= 0) income = 0;
+                updateLocalStorage();
+                updateUI();
+            });
+
+            // Filter expenses by category
+            filterCategory.addEventListener('change', updateUI);
+
+            // Update UI
+            function updateUI() {
+                budgetDisplay.textContent = budget.toFixed(2);
+                incomeDisplay.textContent = income.toFixed(2);
+                totalExpensesDisplay.textContent = totalExpenses.toFixed(2);
+
+                // Filter expenses based on selected category
+                const selectedCategory = filterCategory.value;
+                const filteredExpenses = selectedCategory === 'All'
+                    ? expenses
+                    : expenses.filter(exp => exp.category === selectedCategory);
+
+                // Display filtered expenses
+                expensesList.innerHTML = '';
+                filteredExpenses.forEach(exp => addExpenseToDOM(exp));
+
+                // Check if budget is exceeded
+                if (totalExpenses > budget) {
+                    budgetMessage.textContent = 'You are over budget!';
+                    budgetMessage.style.color = 'red';
+                } else {
+                    budgetMessage.textContent = 'You are within budget.';
+                    budgetMessage.style.color = 'green';
+                }
+
+                updateChart();
+            }
+
+            // Add expense to DOM
+            function addExpenseToDOM(expense) {
+                const li = document.createElement('li');
+                li.classList.add(expense.amount > budget - totalExpenses ? 'over-budget' : '');
+                li.innerHTML = `
+                    ${expense.desc} ($${expense.amount.toFixed(2)}) - ${expense.category}
+                    <button class="delete-btn" data-desc="${expense.desc}">Delete</button>
+                `;
+                expensesList.appendChild(li);
+
+                // Delete expense event listener
+                li.querySelector('.delete-btn').addEventListener('click', (e) => {
+                    const desc = e.target.getAttribute('data-desc');
+                    expenses = expenses.filter(exp => exp.desc !== desc);
+                    totalExpenses -= expense.amount;
+                    updateLocalStorage();
+                    updateUI();
+                });
+            }
+
+            // Update localStorage
+            function updateLocalStorage() {
+                localStorage.setItem('budget', budget.toFixed(2));
+                localStorage.setItem('income', income.toFixed(2));
+                localStorage.setItem('totalExpenses', totalExpenses.toFixed(2));
+                localStorage.setItem('expenses', JSON.stringify(expenses));
+            }
+
+            // Update chart data
+            function updateChart() {
+                const categories = expenses.reduce((acc, exp) => {
+                    acc[exp.category] = (acc[exp.category] || 0) + exp.amount;
+                    return acc;
+                }, {});
+
+                chart.data.labels = Object.keys(categories);
+                chart.data.datasets[0].data = Object.values(categories);
+                chart.update();
+            }
+        });
+    </script>
+
+</body>
+</html>

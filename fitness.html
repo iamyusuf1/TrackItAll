@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fitness Log App</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #e0f7fa;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            height: 100vh;
+            padding: 20px;
+            overflow: auto;
+        }
+
+        .container {
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            max-width: 400px;
+            width: 100%;
+            text-align: center;
+        }
+
+        h1 {
+            margin-bottom: 20px;
+        }
+
+        input[type="text"], input[type="number"], input[type="date"] {
+            width: calc(100% - 20px);
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+        }
+
+        button {
+            padding: 10px 20px;
+            background-color: #00796b;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 10px;
+            font-size: 16px;
+        }
+
+        button:hover {
+            background-color: #004d40;
+        }
+
+        .log-entry {
+            background-color: #f1f8e9;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+            position: relative;
+        }
+
+        .log-entry button {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background-color: #c62828;
+        }
+
+        .log-entry button:hover {
+            background-color: #b71c1c;
+        }
+
+        #progress {
+            font-weight: bold;
+        }
+
+        @media (max-width: 400px) {
+            .container {
+                padding: 15px;
+            }
+
+            button {
+                font-size: 14px;
+            }
+
+            h1 {
+                font-size: 22px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Fitness Log</h1>
+
+        <input type="text" id="exercise" placeholder="Exercise (e.g., Running)" required>
+        <input type="number" id="duration" placeholder="Duration (minutes)" required>
+        <input type="number" id="calories" placeholder="Calories Burned" required>
+        <input type="date" id="date" required>
+        <button id="add-log">Log Workout</button>
+
+        <h2>Workout Logs</h2>
+        <div id="logs-container"></div>
+
+        <h3 id="progress">Total Workouts: 0</h3>
+    </div>
+
+    <script>
+        const addLogButton = document.getElementById('add-log');
+        const logsContainer = document.getElementById('logs-container');
+        const exerciseInput = document.getElementById('exercise');
+        const durationInput = document.getElementById('duration');
+        const caloriesInput = document.getElementById('calories');
+        const dateInput = document.getElementById('date');
+        let workoutLogs = JSON.parse(localStorage.getItem('workoutLogs')) || [];
+
+        // Load workout logs on startup
+        window.onload = updateLogs;
+
+        // Add workout log
+        addLogButton.addEventListener('click', () => {
+            const exercise = exerciseInput.value.trim();
+            const duration = durationInput.value.trim();
+            const calories = caloriesInput.value.trim();
+            const date = dateInput.value;
+
+            if (exercise && duration && calories && date) {
+                const log = { exercise, duration, calories, date };
+                workoutLogs.push(log);
+                localStorage.setItem('workoutLogs', JSON.stringify(workoutLogs)); // Save to localStorage
+                updateLogs();
+                resetInputs();
+            } else {
+                alert('Please fill in all fields.');
+            }
+        });
+
+        // Update logs display
+        function updateLogs() {
+            logsContainer.innerHTML = '';
+            workoutLogs.forEach((log, index) => {
+                const logEntry = document.createElement('div');
+                logEntry.classList.add('log-entry');
+                logEntry.innerHTML = `
+                    <strong>Exercise:</strong> ${log.exercise} <br>
+                    <strong>Duration:</strong> ${log.duration} min <br>
+                    <strong>Calories:</strong> ${log.calories} <br>
+                    <strong>Date:</strong> ${new Date(log.date).toLocaleDateString()}
+                    <button onclick="deleteLog(${index})">Delete</button>
+                `;
+                logsContainer.appendChild(logEntry);
+            });
+            updateProgress();
+        }
+
+        // Reset inputs
+        function resetInputs() {
+            exerciseInput.value = '';
+            durationInput.value = '';
+            caloriesInput.value = '';
+            dateInput.value = '';
+        }
+
+        // Delete workout log
+        function deleteLog(index) {
+            workoutLogs.splice(index, 1);
+            localStorage.setItem('workoutLogs', JSON.stringify(workoutLogs)); // Update localStorage
+            updateLogs();
+        }
+
+        // Update progress
+        function updateProgress() {
+            const totalWorkouts = workoutLogs.length;
+            document.getElementById('progress').textContent = `Total Workouts: ${totalWorkouts}`;
+        }
+    </script>
+
+</body>
+</html>

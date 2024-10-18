@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Habit Tracker</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            padding: 10px;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: white;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        h1 {
+            margin-bottom: 20px;
+            font-size: 24px;
+        }
+
+        .habit-form {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        input[type="text"] {
+            padding: 10px;
+            width: 80%;
+            max-width: 400px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin-bottom: 10px;
+        }
+
+        button {
+            padding: 10px 20px;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        button:hover {
+            background-color: #218838;
+        }
+
+        ul {
+            list-style-type: none;
+            padding: 0;
+            margin-top: 20px;
+        }
+
+        li {
+            padding: 10px;
+            border: 1px solid #ddd;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+
+        li.completed {
+            text-decoration: line-through;
+            color: green;
+        }
+
+        .complete-btn {
+            padding: 5px 10px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .complete-btn:hover {
+            background-color: #0056b3;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                width: 100%;
+                padding: 15px;
+            }
+
+            input[type="text"] {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Habit Tracker</h1>
+        <div class="habit-form">
+            <input type="text" id="habit-name" placeholder="Enter new habit">
+            <button id="add-habit">Add Habit</button>
+        </div>
+        <ul id="habit-list"></ul>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const habitInput = document.getElementById('habit-name');
+            const habitList = document.getElementById('habit-list');
+            const addHabitButton = document.getElementById('add-habit');
+
+            // Load habits from local storage
+            let habits = JSON.parse(localStorage.getItem('habits')) || [];
+
+            // Display all habits
+            habits.forEach(addHabitToDOM);
+
+            // Add new habit
+            addHabitButton.addEventListener('click', () => {
+                const habitName = habitInput.value.trim();
+
+                if (habitName === '') {
+                    alert('Please enter a habit name');
+                    return;
+                }
+
+                const newHabit = {
+                    name: habitName,
+                    completed: false
+                };
+
+                habits.push(newHabit);
+                localStorage.setItem('habits', JSON.stringify(habits));
+
+                addHabitToDOM(newHabit);
+
+                // Clear input
+                habitInput.value = '';
+
+                // Notification for habit added
+                alert(`Habit "${habitName}" added!`);
+            });
+
+            // Add habit to DOM
+            function addHabitToDOM(habit) {
+                const li = document.createElement('li');
+                li.innerHTML = `
+                    ${habit.name}
+                    <button class="complete-btn">${habit.completed ? 'Undo' : 'Complete'}</button>
+                `;
+                
+                if (habit.completed) {
+                    li.classList.add('completed');
+                }
+
+                // Toggle completion status
+                li.querySelector('.complete-btn').addEventListener('click', () => {
+                    habit.completed = !habit.completed;
+                    localStorage.setItem('habits', JSON.stringify(habits));
+
+                    li.classList.toggle('completed');
+                    li.querySelector('.complete-btn').textContent = habit.completed ? 'Undo' : 'Complete';
+
+                    // Notification for completion
+                    if (habit.completed) {
+                        alert(`Habit "${habit.name}" completed for today!`);
+                    } else {
+                        alert(`Habit "${habit.name}" marked incomplete.`);
+                    }
+                });
+
+                habitList.appendChild(li);
+            }
+        });
+    </script>
+
+</body>
+</html>

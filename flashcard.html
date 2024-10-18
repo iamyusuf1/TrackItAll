@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flashcards Study App with Local Storage</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #e0f7fa;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            height: 100vh;
+            padding: 20px;
+            overflow: auto;
+        }
+
+        .container {
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            max-width: 400px;
+            width: 100%;
+            text-align: center;
+        }
+
+        h1 {
+            margin-bottom: 20px;
+        }
+
+        input[type="text"], input[type="category"] {
+            width: calc(100% - 20px);
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+        }
+
+        button {
+            padding: 10px 20px;
+            background-color: #00796b;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 10px;
+            font-size: 16px;
+        }
+
+        button:hover {
+            background-color: #004d40;
+        }
+
+        .flashcard {
+            background-color: #f1f8e9;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+            position: relative;
+        }
+
+        .flashcard button {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background-color: #c62828;
+        }
+
+        .flashcard button:hover {
+            background-color: #b71c1c;
+        }
+
+        .search-bar {
+            margin: 20px 0;
+        }
+
+        #flashcards-container {
+            max-height: 200px;
+            overflow-y: auto;
+            margin-bottom: 20px;
+        }
+
+        #progress {
+            font-weight: bold;
+        }
+
+        @media (max-width: 400px) {
+            .container {
+                padding: 15px;
+            }
+
+            button {
+                font-size: 14px;
+            }
+
+            h1 {
+                font-size: 22px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Flashcards Study App</h1>
+
+        <div class="search-bar">
+            <input type="text" id="search" placeholder="Search flashcards..." oninput="filterFlashcards()">
+        </div>
+
+        <input type="text" id="question" placeholder="Question" required>
+        <input type="text" id="answer" placeholder="Answer" required>
+        <input type="text" id="category" placeholder="Category (e.g., Science)" required>
+        <button id="add-flashcard">Add Flashcard</button>
+
+        <h2>Flashcards</h2>
+        <div id="flashcards-container"></div>
+
+        <h3 id="progress">Total Flashcards: 0</h3>
+    </div>
+
+    <script>
+        const addFlashcardButton = document.getElementById('add-flashcard');
+        const flashcardsContainer = document.getElementById('flashcards-container');
+        const questionInput = document.getElementById('question');
+        const answerInput = document.getElementById('answer');
+        const categoryInput = document.getElementById('category');
+        const searchInput = document.getElementById('search');
+        let flashcards = JSON.parse(localStorage.getItem('flashcards')) || [];
+
+        // Load flashcards on startup
+        window.onload = updateFlashcards;
+
+        // Add flashcard
+        addFlashcardButton.addEventListener('click', () => {
+            const question = questionInput.value.trim();
+            const answer = answerInput.value.trim();
+            const category = categoryInput.value.trim();
+
+            if (question && answer && category) {
+                const flashcard = { question, answer, category };
+                flashcards.push(flashcard);
+                localStorage.setItem('flashcards', JSON.stringify(flashcards)); // Save to localStorage
+                updateFlashcards();
+                resetInputs();
+            } else {
+                alert('Please fill in all fields.');
+            }
+        });
+
+        // Update flashcards display
+        function updateFlashcards(filteredCards = flashcards) {
+            flashcardsContainer.innerHTML = '';
+            filteredCards.forEach((flashcard, index) => {
+                const flashcardElement = document.createElement('div');
+                flashcardElement.classList.add('flashcard');
+                flashcardElement.innerHTML = `
+                    <strong>Q:</strong> ${flashcard.question} <br>
+                    <strong>A:</strong> ${flashcard.answer} <br>
+                    <strong>Category:</strong> ${flashcard.category}
+                    <button onclick="deleteFlashcard(${index})">Delete</button>
+                `;
+                flashcardsContainer.appendChild(flashcardElement);
+            });
+            updateProgress();
+        }
+
+        // Reset inputs
+        function resetInputs() {
+            questionInput.value = '';
+            answerInput.value = '';
+            categoryInput.value = '';
+        }
+
+        // Delete flashcard
+        function deleteFlashcard(index) {
+            flashcards.splice(index, 1);
+            localStorage.setItem('flashcards', JSON.stringify(flashcards)); // Update localStorage
+            updateFlashcards();
+        }
+
+        // Filter flashcards
+        function filterFlashcards() {
+            const searchTerm = searchInput.value.toLowerCase();
+            const filteredFlashcards = flashcards.filter(flashcard =>
+                flashcard.question.toLowerCase().includes(searchTerm) ||
+                flashcard.answer.toLowerCase().includes(searchTerm) ||
+                flashcard.category.toLowerCase().includes(searchTerm)
+            );
+
+            updateFlashcards(filteredFlashcards);
+        }
+
+        // Update progress
+        function updateProgress() {
+            const totalFlashcards = flashcards.length;
+            document.getElementById('progress').textContent = `Total Flashcards: ${totalFlashcards}`;
+        }
+    </script>
+
+</body>
+</html>

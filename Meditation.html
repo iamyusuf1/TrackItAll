@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enhanced Meditation Timer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #e0f7fa;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            max-width: 400px;
+            width: 100%;
+        }
+
+        h1 {
+            margin-bottom: 20px;
+        }
+
+        input[type="number"] {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+        }
+
+        button {
+            padding: 10px 20px;
+            background-color: #00796b;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 10px;
+            font-size: 16px;
+        }
+
+        button:hover {
+            background-color: #004d40;
+        }
+
+        .timer-options {
+            display: flex;
+            justify-content: space-around;
+            margin: 20px 0;
+        }
+
+        .progress-bar-container {
+            height: 20px;
+            background-color: #ddd;
+            margin: 20px 0;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            height: 100%;
+            width: 0;
+            background-color: #00796b;
+        }
+
+        .history {
+            margin-top: 20px;
+        }
+
+        .history-title {
+            font-size: 18px;
+            margin-bottom: 10px;
+        }
+
+        .history-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .history-list li {
+            padding: 10px;
+            background-color: #f1f8e9;
+            margin-bottom: 5px;
+            border-radius: 5px;
+        }
+
+        @media (max-width: 400px) {
+            .container {
+                padding: 15px;
+            }
+
+            button {
+                font-size: 14px;
+            }
+
+            h1 {
+                font-size: 22px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Meditation Timer</h1>
+
+        <input type="number" id="custom-time" placeholder="Custom time in minutes" min="1">
+
+        <div class="timer-options">
+            <button onclick="startTimer(5)">5 min</button>
+            <button onclick="startTimer(10)">10 min</button>
+            <button onclick="startTimer(15)">15 min</button>
+        </div>
+
+        <button id="start-custom">Start Custom Timer</button>
+
+        <div class="progress-bar-container">
+            <div id="progress-bar" class="progress-bar"></div>
+        </div>
+
+        <h2 id="countdown">00:00</h2>
+
+        <!-- Meditation History -->
+        <div class="history">
+            <h3 class="history-title">Session History</h3>
+            <ul id="history-list" class="history-list"></ul>
+        </div>
+
+        <!-- Audio for Sound Alerts -->
+        <audio id="start-sound" src="https://www.soundjay.com/button/beep-07.wav"></audio>
+        <audio id="end-sound" src="https://www.soundjay.com/button/beep-09.wav"></audio>
+
+    </div>
+
+    <script>
+        const countdownDisplay = document.getElementById('countdown');
+        const progressBar = document.getElementById('progress-bar');
+        const startCustomButton = document.getElementById('start-custom');
+        const historyList = document.getElementById('history-list');
+        const startSound = document.getElementById('start-sound');
+        const endSound = document.getElementById('end-sound');
+        let timerInterval;
+
+        // Start predefined timers
+        function startTimer(minutes) {
+            const duration = minutes * 60;
+            startCountdown(duration);
+        }
+
+        // Start custom timer
+        startCustomButton.addEventListener('click', () => {
+            const customTime = parseInt(document.getElementById('custom-time').value);
+            if (isNaN(customTime) || customTime <= 0) {
+                alert('Please enter a valid number of minutes.');
+                return;
+            }
+            startCountdown(customTime * 60);
+        });
+
+        // Start countdown timer
+        function startCountdown(duration) {
+            clearInterval(timerInterval); // Clear any previous timers
+            let remainingTime = duration;
+            const totalDuration = duration;
+            startSound.play(); // Play start sound
+            updateCountdown(remainingTime);
+
+            timerInterval = setInterval(() => {
+                remainingTime--;
+                updateCountdown(remainingTime);
+                updateProgressBar(totalDuration, remainingTime);
+
+                if (remainingTime <= 0) {
+                    clearInterval(timerInterval);
+                    endSound.play(); // Play end sound
+                    saveSession(totalDuration / 60); // Save session history
+                }
+            }, 1000);
+        }
+
+        // Update countdown display
+        function updateCountdown(seconds) {
+            const minutes = Math.floor(seconds / 60);
+            const remainingSeconds = seconds % 60;
+            countdownDisplay.textContent = `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
+        }
+
+        // Update progress bar
+        function updateProgressBar(totalDuration, remainingTime) {
+            const progressPercent = ((totalDuration - remainingTime) / totalDuration) * 100;
+            progressBar.style.width = `${progressPercent}%`;
+        }
+
+        // Save session to history
+        function saveSession(minutes) {
+            const sessionTime = new Date().toLocaleTimeString();
+            const li = document.createElement('li');
+            li.textContent = `${minutes} minutes - ${sessionTime}`;
+            historyList.appendChild(li);
+        }
+    </script>
+
+</body>
+</html>

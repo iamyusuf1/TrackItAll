@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enhanced Recipe Finder App</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #e0f7fa;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            height: 100vh;
+            padding: 20px;
+            overflow: auto;
+        }
+
+        .container {
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            max-width: 500px;
+            width: 100%;
+            text-align: center;
+        }
+
+        h1 {
+            margin-bottom: 20px;
+        }
+
+        input[type="text"], select {
+            width: calc(100% - 20px);
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+        }
+
+        button {
+            padding: 10px 20px;
+            background-color: #00796b;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 10px;
+            font-size: 16px;
+        }
+
+        button:hover {
+            background-color: #004d40;
+        }
+
+        .recipe {
+            background-color: #f1f8e9;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .favorite {
+            color: #ff5722;
+        }
+
+        @media (max-width: 400px) {
+            .container {
+                padding: 15px;
+            }
+
+            button {
+                font-size: 14px;
+            }
+
+            h1 {
+                font-size: 22px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Enhanced Recipe Finder</h1>
+        
+        <input type="text" id="ingredients" placeholder="Enter ingredients (comma-separated)" required>
+        <select id="dietary-preference">
+            <option value="">Select Dietary Preference</option>
+            <option value="vegetarian">Vegetarian</option>
+            <option value="vegan">Vegan</option>
+            <option value="gluten-free">Gluten-Free</option>
+        </select>
+        <button id="find-recipes">Find Recipes</button>
+
+        <h2>Recipes</h2>
+        <div id="recipes-container"></div>
+    </div>
+
+    <script>
+        const findRecipesButton = document.getElementById('find-recipes');
+        const recipesContainer = document.getElementById('recipes-container');
+
+        // Mock recipes (can be replaced with an external API)
+        const recipes = [
+            {
+                name: "Pasta Primavera",
+                ingredients: ["pasta", "vegetables", "olive oil", "garlic"],
+                instructions: "Cook pasta, sauté vegetables, and mix with olive oil and garlic.",
+                dietary: "vegetarian",
+            },
+            {
+                name: "Vegetable Stir Fry",
+                ingredients: ["vegetables", "soy sauce", "ginger", "garlic"],
+                instructions: "Stir fry vegetables with soy sauce, ginger, and garlic.",
+                dietary: "vegan",
+            },
+            {
+                name: "Omelette",
+                ingredients: ["eggs", "vegetables", "cheese"],
+                instructions: "Beat eggs, pour into a pan, add vegetables and cheese, and cook.",
+                dietary: "vegetarian",
+            },
+            {
+                name: "Chicken Salad",
+                ingredients: ["chicken", "lettuce", "tomato", "cucumber"],
+                instructions: "Cook chicken, chop vegetables, and mix together.",
+                dietary: "gluten-free",
+            }
+        ];
+
+        // Find recipes based on input ingredients and dietary preferences
+        findRecipesButton.addEventListener('click', () => {
+            const input = document.getElementById('ingredients').value.trim();
+            const dietaryPreference = document.getElementById('dietary-preference').value;
+            const inputIngredients = input.split(',').map(ing => ing.trim().toLowerCase());
+            recipesContainer.innerHTML = '';
+
+            const foundRecipes = recipes.filter(recipe => 
+                recipe.ingredients.some(ingredient => inputIngredients.includes(ingredient)) &&
+                (!dietaryPreference || recipe.dietary === dietaryPreference)
+            );
+
+            if (foundRecipes.length > 0) {
+                foundRecipes.forEach(recipe => {
+                    const recipeElement = document.createElement('div');
+                    recipeElement.classList.add('recipe');
+                    recipeElement.innerHTML = `
+                        <strong>${recipe.name}</strong> <br>
+                        <strong>Ingredients:</strong> ${recipe.ingredients.join(', ')} <br>
+                        <strong>Instructions:</strong> ${recipe.instructions}
+                    `;
+                    recipeElement.onclick = () => viewRecipeDetails(recipe);
+                    recipesContainer.appendChild(recipeElement);
+                });
+            } else {
+                recipesContainer.innerHTML = '<p>No recipes found.</p>';
+            }
+        });
+
+        // View recipe details (mock functionality)
+        function viewRecipeDetails(recipe) {
+            alert(`Recipe: ${recipe.name}\nIngredients: ${recipe.ingredients.join(', ')}\nInstructions: ${recipe.instructions}`);
+        }
+    </script>
+
+</body>
+</html>
